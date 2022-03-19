@@ -1,26 +1,28 @@
 const note = require('express').Router();
-const { readFromFile, writeToFile } = require('../helpers/fsUtils');
+const { readFromFile, readAndAppend, writeToFile } = require('../helpers/fsUtils');
 const uuid = require('../helpers/uuid');
+const fs = require('fs');
 
 note.get('/', (req, res) => readFromFile('../Assets/db/db.json').then((data) => res.json(JSON.parse(data))));
 
 note.post('/', (req, res) => {
     // Destructuring assignment for the items in req.body
     const { title, text} = req.body;
-  
+
     // If all the required properties are present
     if (title && text) {
       // Variable for the object we will save
       const newNote = {
         title,
-        text
+        text,
+        id: uuid()
       };
   
-      writeToFile(newNote, '../Assets/db/db.json');
+      readAndAppend(newNote, '../Assets/db/db.json');
   
       const response = {
         status: 'success',
-        body: newFeedback,
+        body: newNote,
       };
   
       res.json(response);
@@ -28,5 +30,21 @@ note.post('/', (req, res) => {
       res.json('Error in posting feedback');
     }
   });
+
+  note.delete('/:id', (req, res) => 
+  {
+
+    readFromFile('../Assets/db/db.json').then((data) => 
+    {
+      let newData = JSON.parse(data);
+    
+      const deletedJSON = newData.filter( note => note.id.toString() !== req.params.id.toString());
+
+      writeToFile('../Assets/db/db.json', deletedJSON);
+
+      res.json(deletedJSON);
+
+    })
+  })
 
   module.exports = note;
